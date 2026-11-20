@@ -1,42 +1,57 @@
-![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
+# ROBOCORE-8 | Tiny Tapeout GlobalFoundries
 
-# Tiny Tapeout Verilog Project Template
+**Digital motion controller for a small mobile robot, with exactly 8 dedicated digital inputs and 8 dedicated digital outputs.** Built on the original `ttgf-verilog-template` including GitHub Actions flows for test and GDS.
 
-- [Read the documentation for project](docs/info.md)
+## Port allocation
 
-## What is Tiny Tapeout?
+| Input | Function | Output | Function |
+|---|---|---|---|
+| ui[0] | front obstacle, 1 = blocked | uo[0] | left motor forward |
+| ui[1] | left obstacle, 1 = blocked | uo[1] | right motor forward |
+| ui[2] | right obstacle, 1 = blocked | uo[2] | left motor reverse |
+| ui[3] | autonomous mode, 1 = auto | uo[3] | right motor reverse |
+| ui[4] | manual command bit 0 | uo[4] | brake / stop indicator, 1 = stopped |
+| ui[5] | manual command bit 1 | uo[5] | front obstacle indicator |
+| ui[6] | arm/enable | uo[6] | heartbeat link is valid |
+| ui[7] | heartbeat toggle | uo[7] | mode echo |
 
-Tiny Tapeout is an educational project that aims to make it easier and cheaper than ever to get your digital and analog designs manufactured on a real chip.
+Additional Tiny Tapeout reserved interface: `clk`, active-low `rst_n`, and `ena`. **These are not part of the eight dedicated data inputs**. The eight bidirectional pads (`uio`) are not used: `uio_oe=0`, `uio_out=0`. Do not connect motors directly to ASIC outputs.
 
-To learn more and get started, visit https://tinytapeout.com.
+### Motor output truth table
 
-## Set up your Verilog project
+| Situation | uo[3:0] | Comment |
+|---|---|---|
+| Safe forward path | `0011` | Both motors forward |
+| Front blocked, left clear | `0110` | Left motor reverse; right forward |
+| Front and left blocked, right clear | `1001` | Left motor forward; right reverse |
+| All blocked / disarmed / link lost | `0000` | Stop, brake indicator = 1 |
 
-1. Add your Verilog files to the `src` folder.
-2. Edit the [info.yaml](info.yaml) and update information about your project, paying special attention to the `source_files` and `top_module` properties. If you are upgrading an existing Tiny Tapeout project, check out our [online info.yaml migration tool](https://tinytapeout.github.io/tt-yaml-upgrade-tool/).
-3. Edit [docs/info.md](docs/info.md) and add a description of your project.
-4. Adapt the testbench to your design. See [test/README.md](test/README.md) for more information.
+Autonomous priority: forward, left pivot, right pivot, stop. This is **rule-based obstacle avoidance, not AI**. Manual command bits `ui[5:4]`: `00` stop, `01` forward, `10` pivot left, `11` pivot right. Selected direction blocked = stop. No automatic reverse translation, because there is no rear obstacle detector.
 
-The GitHub action will automatically build the ASIC files using [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
+### Heartbeat watchdog
 
-## Enable GitHub actions to build the results page
+After reset or disarm, motion requires a **new transition** on ui[7]. It must keep toggling at least once every 1024 clock cycles; otherwise, motor outputs become zero. Nominal `clock_hz=1000000`, so timeout is about 1.024 ms. An ESP32 should toggle the heartbeat substantially faster than this threshold; a typical operating system or Wi-Fi task alone should not be relied upon for such timing. Adjust clock or timeout in RTL if needed, and retest the physical integration.
 
-- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part)
+**Safety caveat:** The watchdog only checks transition activity. It does not authenticate messages, measure sensor integrity, or replace an independent physical emergency-stop circuit. `BRAKE` is a stop indicator: whether short-braking occurs depends on the motor driver design.
 
-## Resources
+## Upload to GitHub
 
-- [FAQ](https://tinytapeout.com/faq/)
-- [Digital design lessons](https://tinytapeout.com/digital_design/)
-- [Learn how semiconductors work](https://tinytapeout.com/siliwiz/)
-- [Join the community](https://tinytapeout.com/discord)
-- [Build your design locally](https://www.tinytapeout.com/guides/local-hardening/)
+1. Create a **public** repo from the official [Tiny Tapeout GF template](https://github.com/TinyTapeout/ttgf-verilog-template), or create an empty public repo.
+2. Upload **all contents** of this ZIP project folder, including `.github/workflows`, not the ZIP itself. Keep `src/project.v`, `info.yaml`, and `test/test.py` in the same relative paths.
+3. Open **Actions** and run/inspect the **test** workflow. Then inspect **gds** workflow for synthesis and placement.
+4. If GDS completes, use its build artifact and layout viewer. **No passing CI/GDS is claimed until GitHub actually executes it.**
 
-## What next?
+## Run Cocotb tests locally (if installed)
 
-- [Submit your design to the next shuttle](https://app.tinytapeout.com/).
-- Edit [this README](README.md) and explain your design, how it works, and how to test it.
-- Share your project on your social network of choice:
-  - LinkedIn [#tinytapeout](https://www.linkedin.com/search/results/content/?keywords=%23tinytapeout) [@TinyTapeout](https://www.linkedin.com/company/100708654/)
-  - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
-  - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
-  - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
+```bash
+python3 -m pip install -r test/requirements.txt
+sudo apt install iverilog
+cd test
+make
+```
+
+`src/config.json` and CI configuration remain from the original GF template. The one-tile setting is an **initial target**, not proof it physically fits; verify with the GDS run.
+
+## Suggested connection
+
+Sensors -> external signal conditioning / ESP32 GPIO -> `ui[7:0]` -> GF ASIC -> logic-level interface + **motor driver** -> two motors. Voltage compatibility and level shifting must be checked based on the actual fabricated hardware. A camera and web dashboard, if added, run outside the ASIC.
