@@ -1,0 +1,38 @@
+# Tiny Tapeout GF project information - ROBOCORE-8
+project:
+  title: "ROBOCORE-8: Autonomous Robot Safety Controller"
+  author: "IEEE Open Silicon Bootcamp Team"
+  discord: ""
+  description: "8-input/8-output robot motor control with obstacle avoidance and heartbeat watchdog"
+  language: "Verilog"
+  clock_hz: 1000000
+  tiles: "1x1"
+  top_module: "tt_um_robocore8"
+  source_files:
+    - "project.v"
+pinout:
+  ui[0]: "FRONT_OBS"
+  ui[1]: "LEFT_OBS"
+  ui[2]: "RIGHT_OBS"
+  ui[3]: "AUTO_MODE"
+  ui[4]: "CMD0"
+  ui[5]: "CMD1"
+  ui[6]: "ARM"
+  ui[7]: "HEARTBEAT"
+  uo[0]: "LEFT_FWD"
+  uo[1]: "RIGHT_FWD"
+  uo[2]: "LEFT_REV"
+  uo[3]: "RIGHT_REV"
+  uo[4]: "BRAKE"
+  uo[5]: "FRONT_OBS"
+  uo[6]: "LINK_OK"
+  uo[7]: "AUTO_ECHO"
+  uio[0]: ""
+  uio[1]: ""
+  uio[2]: ""
+  uio[3]: ""
+  uio[4]: ""
+  uio[5]: ""
+  uio[6]: ""
+  uio[7]: ""
+yaml_version: 6
