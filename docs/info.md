@@ -1,20 +1,7 @@
-<!---
+# ROBOCORE-8: 8-bit robot motion and watchdog control
 
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
+ROBOCORE-8 is a minimal, synthesizeable finite-state-style robot controller described in Verilog and targeted at Tiny Tapeout GF. It maps **8 dedicated digital inputs to 8 dedicated digital outputs**. It contains an obstacle avoidance priority decoder and a clock-cycle heartbeat watchdog. `uio` pins are disabled.
 
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
+Please see the root `README.md` for the complete pinout, behavior, timing and safety limitations.
 
-## How it works
-
-Explain how your project works
-
-## How to test
-
-Explain how to use your project
-
-## External hardware
-
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+The project does **not** contain an ESP32 firmware implementation, physical circuit board, machine-learning engine, camera vision pipeline, or confirmed manufactured silicon. Those are future integration options.
