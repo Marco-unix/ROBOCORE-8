@@ -1,7 +1,7 @@
 # Tiny Tapeout GF project information - ROBOCORE-8
 project:
   title: "ROBOCORE-8: Autonomous Robot Safety Controller"
-  author: "IEEE Open Silicon Bootcamp Team"
+  author: "Marco Antonio Gómez Hernández"
   discord: ""
   description: "8-input/8-output robot motor control with obstacle avoidance and heartbeat watchdog"
   language: "Verilog"
